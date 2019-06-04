@@ -81,6 +81,48 @@ class LS_Coupon_Admin {
 			}
 		});
 
+		add_filter('manage_coupon_posts_columns', function ($columns) {
+			$columns['desc'] = '描述';
+			$columns['shops'] = '关联门店';
+			return $columns;
+		});
+
+		add_action('manage_coupon_posts_custom_column', function ($column_name) {
+			global $post;
+			switch ($column_name) {
+				case 'desc' :
+					echo get_post_meta($post->ID, 'desc', true);
+					break;
+				case 'shops' :
+					$all_shops = get_field('all_shops', $post->ID);
+
+					if ($all_shops) {
+						echo '全部门店';
+					} else {
+						$shops = get_field('shops', $post->ID);
+						echo implode(', ', array_column($shops, 'post_title'));
+					}
+					break;
+				default;
+			}
+		});
+
+		add_filter('manage_code_posts_columns', function ($columns) {
+			$columns['coupon_title'] = '优惠';
+			return $columns;
+		});
+
+		add_action('manage_code_posts_custom_column', function ($column_name) {
+			global $post;
+			switch ($column_name) {
+				case 'coupon_title' :
+					$coupon = get_field('coupon', $post->ID);
+					echo $coupon->post_title;
+					break;
+				default;
+			}
+		});
+
 	}
 
 }

@@ -7,6 +7,7 @@ class LS_Coupon_Admin {
 		self::manage_admin_columns();
 	}
 
+
 	protected static function register_post_types() {
 
 		// register_taxonomy_for_object_type('category', 'attachment');
@@ -122,6 +123,40 @@ class LS_Coupon_Admin {
 				default;
 			}
 		});
+
+		/**
+		 * Convert values of ACF core date time pickers from Y-m-d H:i:s to timestamp
+		 * @param  string $value   unmodified value
+		 * @param  int    $post_id post ID
+		 * @param  object $field   field object
+		 * @return string          modified value
+		 */
+		function acf_save_as_timestamp( $value, $post_id, $field  ) {
+			if( $value ) {
+				$value = strtotime( $value ) - get_option( 'gmt_offset' ) * HOUR_IN_SECONDS;
+			}
+
+			return $value;
+		}
+
+		add_filter( 'acf/update_value/type=date_time_picker', 'acf_save_as_timestamp', 10, 3 );
+
+		/**
+		 * Convert values of ACF core date time pickers from timestamp to Y-m-d H:i:s
+		 * @param  string $value   unmodified value
+		 * @param  int    $post_id post ID
+		 * @param  object $field   field object
+		 * @return string          modified value
+		 */
+		function acf_load_as_timestamp( $value, $post_id, $field  ) {
+			if( $value ) {
+				$value = date( 'Y-m-d H:i:s', (int)$value + get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
+			}
+
+			return $value;
+		}
+
+		add_filter( 'acf/load_value/type=date_time_picker', 'acf_load_as_timestamp', 10, 3 );
 
 	}
 

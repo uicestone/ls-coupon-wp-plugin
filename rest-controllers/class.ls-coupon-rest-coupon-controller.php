@@ -1,6 +1,6 @@
 <?php
 
-class LS_Coupon_REST_coupon_Controller extends WP_REST_Controller {
+class LS_Coupon_REST_Coupon_Controller extends WP_REST_Controller {
 
 	public function __construct() {
 		$this->namespace = 'ls-coupon/v1';
@@ -42,7 +42,9 @@ class LS_Coupon_REST_coupon_Controller extends WP_REST_Controller {
 		$coupons = array_map(function (WP_Post $post) {
 			$coupon = array(
 				'id' => $post->ID,
-				'type' => get_post_meta($post->ID, 'type', true)
+				'desc' => get_field('desc', $post->ID),
+				'shops' => get_field('shops', $post->ID),
+				'allShop' => get_field('all_shop', $post->ID),
 			);
 			return (object) $coupon;
 		}, $posts);

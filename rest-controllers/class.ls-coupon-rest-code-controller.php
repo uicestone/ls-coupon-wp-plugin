@@ -17,8 +17,11 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 				'methods' => WP_REST_Server::READABLE,
 				'callback' => array( $this, 'get_codes' ),
 			), array(
-				'methods' => WP_REST_Server::EDITABLE,
+				'methods' => WP_REST_Server::CREATABLE,
 				'callback' => array( $this, 'post_code' ),
+			), array(
+				'methods' => WP_REST_Server::EDITABLE,
+				'callback' => array( $this, 'patch_code' ),
 			), array(
 				'methods' => WP_REST_Server::DELETABLE,
 				'callback' => array( $this, 'delete_code' ),
@@ -105,7 +108,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 			$code_post_exists = get_page_by_path($code_string, 'OBJECT', 'code');
 
 			if ($code_post_exists) {
-				return rest_ensure_response(new WP_Error(409, 'Code exists with this openid + coupon.'));
+				continue;
 			}
 
 			$code_id = wp_insert_post(array(
@@ -144,6 +147,14 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 		}
 
 		return rest_ensure_response($codes);
+	}
+
+	/**
+	 * @param WP_REST_Request $request
+	 * @return WP_Error|WP_REST_Response
+	 */
+	public static function patch_code( $request ) {
+
 	}
 
 	/**

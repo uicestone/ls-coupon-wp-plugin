@@ -117,7 +117,7 @@ class LS_Coupon_Admin {
 			global $post;
 			switch ($column_name) {
 				case 'coupon_title' :
-					$coupon = get_field('coupon', $post->ID);
+					$coupon = get_post(get_post_meta($post->ID, 'coupon', true));
 					echo $coupon->post_title;
 					break;
 				default;

@@ -51,6 +51,8 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 		$codes = array_map(function (WP_Post $post) {
 			$coupon_id = get_post_meta($post->ID, 'coupon', true);
 
+			$used_shop_post = get_field('used_shop', $post->ID);
+
 			$code = array(
 				'id' => $post->ID,
 				'codeString' => $post->post_name,
@@ -68,7 +70,14 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 						);
 					}, get_field('shops', $coupon_id)),
 					'allShop' => !!get_field('all_shop', $coupon_id),
-				)
+				),
+				'used' => true,
+				'usedShop' => array(
+					'id' => $used_shop_post->ID,
+					'name' => get_the_title($used_shop_post->ID)
+				),
+				'usedTime' => date('Y-m-d H:i:s', time() + get_option( 'gmt_offset' ) * HOUR_IN_SECONDS)
+
 			);
 			return (object) $code;
 		}, $posts);
@@ -140,7 +149,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 						);
 					}, get_field('shops', $coupon_id)),
 					'allShop' => !!get_field('all_shop', $coupon_id),
-				)
+				),
 			);
 
 			$codes[] = $code;

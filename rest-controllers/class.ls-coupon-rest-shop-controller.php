@@ -33,13 +33,13 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 
 		$posts = get_posts($parameters);
 
-		$shops = array_map(function (WP_Post $post) {
+		$shops = array_map(function (WP_Post $shop_post) {
 
-			$valid_coupons = array_map(function($post) {
+			$valid_coupons = array_map(function(WP_Post $coupon_post) {
 				return array(
-					'id' => $post->ID,
-					'desc' => get_field('desc', $post->ID),
-					'all_shop' => !!get_field('all_shop', $post->ID),
+					'id' => $coupon_post->ID,
+					'desc' => get_field('desc', $coupon_post->ID),
+					'all_shop' => !!get_field('all_shop', $coupon_post->ID),
 				);
 			}, get_posts(array(
 				'post_type' => 'coupon',
@@ -48,7 +48,7 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 					'relation' => 'OR',
 					'shops' => array(
 						'key' => 'shops',
-						'value' => '%"' . $post->ID . '"%',
+						'value' => '"' . $shop_post->ID . '"',
 						'compare' => 'LIKE'
 					),
 					'all_shops' => array(
@@ -59,10 +59,10 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 			)));
 
 			$shop = array(
-				'id' => $post->ID,
-				'name' => get_the_title($post->ID),
-				'address' => get_field('address', $post->ID),
-				'phone' => get_field('phone', $post->ID),
+				'id' => $shop_post->ID,
+				'name' => get_the_title($shop_post->ID),
+				'address' => get_field('address', $shop_post->ID),
+				'phone' => get_field('phone', $shop_post->ID),
 				'validCoupons' => $valid_coupons
 			);
 

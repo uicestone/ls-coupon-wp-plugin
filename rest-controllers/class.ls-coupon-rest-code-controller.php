@@ -155,6 +155,67 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 	 */
 	public static function patch_code( $request ) {
 
+		$body = $request->get_json_params();
+
+		$code_string = $body['codeString'];
+
+		$code_post = get_page_by_path($body['codeString'], 'OBJECT', 'code');
+
+		$openid = $body['openid'];
+
+		if (!$openid) {
+			return rest_ensure_response(new WP_Error(401, 'Missing openid.'));
+		}
+
+		$user = get_users(array('meta_key' => 'openid', 'meta_value' => $openid))[0];
+
+		if (!$user) {
+			return rest_ensure_response(new WP_Error(403, 'User is not allowed to scan.'));
+		}
+
+		$shop_post = get_field('shop', 'user_' . $user->ID);
+
+		if (!$shop_post) {
+			return rest_ensure_response(new WP_Error(403, 'User is not assigned to any shop.'));
+		}
+
+		$used = get_field('used', $code_post);
+
+		if ($used) {
+			return rest_ensure_response(new WP_Error(403, 'Code is already used.', $code_string));
+		}
+
+		update_post_meta($code_post->ID, 'used', 1);
+		update_post_meta($code_post->ID, 'used_shop', $shop_post->ID);
+		update_post_meta($code_post->ID, 'used_time', time());
+
+		$coupon_id = get_post_meta($code_post->ID, 'coupon', true);
+
+		return rest_ensure_response(array(
+			'id' => $code_post->ID,
+			'codeString' => $code_post->post_name,
+			'couponId' => $coupon_id,
+			// 'expires_at' => '',
+			'coupon' => array(
+				'id' => $coupon_id,
+				'desc' => get_field('desc', $coupon_id),
+				'shops' => array_map(function($shop_post) {
+					return array(
+						'id' => $shop_post->ID,
+						'name' => get_the_title($shop_post->ID),
+						'address' => get_field('address', $shop_post->ID),
+						'phone' => get_field('phone', $shop_post->ID),
+					);
+				}, get_field('shops', $coupon_id)),
+				'allShop' => !!get_field('all_shop', $coupon_id),
+			),
+			'used' => true,
+			'usedShop' => array(
+				'id' => $shop_post->ID,
+				'name' => get_the_title($shop_post->ID)
+			),
+			'usedTime' => date('Y-m-d H:i:s', time() + get_option( 'gmt_offset' ) * HOUR_IN_SECONDS)
+		));
 	}
 
 	/**

@@ -110,7 +110,6 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 
 			// TODO
 			// validate coupon
-			// valid duplicate coupon code
 
 			$code_string = crc32(sha1($openid . ',' . $coupon_id));
 

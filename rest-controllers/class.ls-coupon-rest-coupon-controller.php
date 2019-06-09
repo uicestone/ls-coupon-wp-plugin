@@ -3,7 +3,7 @@
 class LS_Coupon_REST_Coupon_Controller extends WP_REST_Controller {
 
 	public function __construct() {
-		$this->namespace = 'ls-coupon/v1';
+		$this->namespace = 'v1/ls-coupon';
 		$this->rest_base = 'coupon';
 	}
 

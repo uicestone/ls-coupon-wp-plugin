@@ -29,7 +29,7 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 	 */
 	public static function get_shops( $request ) {
 
-		$parameters = array('post_type' => 'shop', 'limit' => -1);
+		$parameters = array('post_type' => 'shop', 'posts_per_page' => -1);
 
 		$posts = get_posts($parameters);
 

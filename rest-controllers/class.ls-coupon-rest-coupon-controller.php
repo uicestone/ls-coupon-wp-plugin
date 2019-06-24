@@ -35,7 +35,7 @@ class LS_Coupon_REST_Coupon_Controller extends WP_REST_Controller {
 	 */
 	public static function get_coupons( $request ) {
 
-		$parameters = array('post_type' => 'coupon', 'limit' => -1);
+		$parameters = array('post_type' => 'coupon', 'posts_per_page' => -1);
 
 		$posts = get_posts($parameters);
 

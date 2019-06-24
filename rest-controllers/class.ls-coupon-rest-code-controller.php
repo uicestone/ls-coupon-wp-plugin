@@ -42,7 +42,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 			return rest_ensure_response(new WP_Error(400, 'Missing openid.'));
 		}
 
-		$parameters = array('post_type' => 'code', 'limit' => -1, 'post_status' => 'any', 'meta_query' => array(
+		$parameters = array('post_type' => 'code', 'posts_per_page' => -1, 'post_status' => 'any', 'meta_query' => array(
 			array('key' => 'openid', 'value' => $openid)
 		));
 
@@ -70,15 +70,20 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 						);
 					}, get_field('shops', $coupon_id)),
 					'allShop' => !!get_field('all_shop', $coupon_id),
-				),
-				'used' => true,
-				'usedShop' => array(
-					'id' => $used_shop_post->ID,
-					'name' => get_the_title($used_shop_post->ID)
-				),
-				'usedTime' => date('Y-m-d H:i:s', time() + get_option( 'gmt_offset' ) * HOUR_IN_SECONDS)
-
+				)
 			);
+
+			if ($used = get_field('used', $post->ID)) {
+				$code = array_merge($code, array(
+					'used' => true,
+					'usedShop' => array(
+						'id' => $used_shop_post->ID,
+						'name' => get_the_title($used_shop_post->ID)
+					),
+					'usedTime' => date('Y-m-d H:i:s', time() + get_option( 'gmt_offset' ) * HOUR_IN_SECONDS)
+				));
+			}
+
 			return (object) $code;
 		}, $posts);
 

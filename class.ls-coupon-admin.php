@@ -38,7 +38,7 @@ class LS_Coupon_Admin {
 				'not_found' => '未找到优惠'
 			),
 			'public' => true,
-			'supports' => array('title'),
+			'supports' => array('title', 'editor'),
 			'menu_icon' => 'dashicons-megaphone',
 			'has_archive' => true
 		));
@@ -117,7 +117,7 @@ class LS_Coupon_Admin {
 			global $post;
 			switch ($column_name) {
 				case 'coupon_title' :
-					$coupon = get_post(get_post_meta($post->ID, 'coupon', true));
+					$coupon = get_field('coupon', $post->ID);
 					echo $coupon->post_title;
 					break;
 				default;

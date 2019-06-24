@@ -50,6 +50,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 
 		$codes = array_map(function (WP_Post $post) {
 			$coupon_id = get_post_meta($post->ID, 'coupon', true);
+			$coupon_post = get_post($coupon_id);
 
 			$used_shop_post = get_field('used_shop', $post->ID);
 
@@ -69,7 +70,9 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 							'phone' => get_field('phone', $shop_post->ID),
 						);
 					}, get_field('shops', $coupon_id)),
-					'allShop' => !!get_field('all_shop', $coupon_id),
+					'allShops' => !!get_field('all_shops', $coupon_id),
+					'thumbnailUrl' => get_the_post_thumbnail_url($coupon_id),
+					'content' => wpautop($coupon_post->post_content)
 				)
 			);
 
@@ -121,7 +124,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 			$code_post_exists = get_page_by_path($code_string, 'OBJECT', 'code');
 
 			if ($code_post_exists) {
-				continue;
+				// continue;
 			}
 
 			$code_id = wp_insert_post(array(

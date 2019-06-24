@@ -45,6 +45,8 @@ class LS_Coupon_REST_Coupon_Controller extends WP_REST_Controller {
 				'desc' => get_field('desc', $post->ID),
 				'shops' => get_field('shops', $post->ID),
 				'allShop' => get_field('all_shop', $post->ID),
+				'thumbnailUrl' => get_the_post_thumbnail_url($post->ID),
+				'content' => wpautop($post->post_content)
 			);
 			return (object) $coupon;
 		}, $posts);

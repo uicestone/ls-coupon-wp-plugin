@@ -38,7 +38,7 @@ class LS_Coupon_Admin {
 				'not_found' => '未找到优惠'
 			),
 			'public' => true,
-			'supports' => array('title', 'editor'),
+			'supports' => array('title', 'editor', 'thumbnail'),
 			'menu_icon' => 'dashicons-megaphone',
 			'has_archive' => true
 		));

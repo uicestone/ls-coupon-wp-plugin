@@ -72,7 +72,9 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 					}, get_field('shops', $coupon_id)),
 					'allShops' => !!get_field('all_shops', $coupon_id),
 					'thumbnailUrl' => get_the_post_thumbnail_url($coupon_id),
-					'content' => wpautop($coupon_post->post_content)
+					'content' => wpautop($coupon_post->post_content),
+					'validFrom' => get_field('valid_from', $coupon_id),
+					'validTill' => get_field('valid_till', $coupon_id),
 				)
 			);
 
@@ -123,8 +125,8 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 
 			$code_post_exists = get_page_by_path($code_string, 'OBJECT', 'code');
 
-			if ($code_post_exists) {
-				// continue;
+			if ($code_post_exists && !constant('WP_DEBUG')) {
+				continue;
 			}
 
 			$code_id = wp_insert_post(array(

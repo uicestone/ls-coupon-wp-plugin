@@ -41,7 +41,9 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 					'desc' => get_field('desc', $coupon_post->ID),
 					'all_shops' => !!get_field('all_shops', $coupon_post->ID),
 					'thumbnailUrl' => get_the_post_thumbnail_url($coupon_post->ID),
-					'content' => wpautop($coupon_post->post_content)
+					'content' => wpautop($coupon_post->post_content),
+					'validFrom' => get_field('valid_from', $coupon_post->ID),
+					'validTill' => get_field('valid_till', $coupon_post->ID),
 				);
 			}, get_posts(array(
 				'post_type' => 'coupon',

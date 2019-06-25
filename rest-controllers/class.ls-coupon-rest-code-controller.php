@@ -109,6 +109,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 		}
 
 		$openid = $body['openid'];
+		$customer_nickname = $body['customerNickname'];
 
 		if (!array_key_exists('couponIds', $body) || !is_array($body['couponIds'])) {
 			return rest_ensure_response(new WP_Error(400, 'Missing coupon.'));
@@ -120,6 +121,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 
 			// TODO
 			// validate coupon
+			$coupon_post = get_post($coupon_id);
 
 			$code_string = crc32(sha1($openid . ',' . $coupon_id));
 
@@ -137,7 +139,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 
 			add_post_meta($code_id, 'coupon', $coupon_id);
 			add_post_meta($code_id, 'openid', $openid);
-			add_post_meta($code_id, 'expires_at', time() + 86400*30);
+			add_post_meta($code_id, 'customer_nickname', $customer_nickname);
 
 			$code_post = get_post($code_id);
 
@@ -157,7 +159,11 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 							'phone' => get_field('phone', $shop_post->ID),
 						);
 					}, get_field('shops', $coupon_id)),
-					'allShop' => !!get_field('all_shop', $coupon_id),
+					'allShops' => !!get_field('all_shops', $coupon_id),
+					'thumbnailUrl' => get_the_post_thumbnail_url($coupon_id),
+					'content' => wpautop($coupon_post->post_content),
+					'validFrom' => get_field('valid_from', $coupon_id),
+					'validTill' => get_field('valid_till', $coupon_id),
 				),
 			);
 

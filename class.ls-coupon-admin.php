@@ -109,16 +109,36 @@ class LS_Coupon_Admin {
 		});
 
 		add_filter('manage_code_posts_columns', function ($columns) {
+			$columns['code'] = '券码';
+			$columns['openid'] = '微信Open ID';
+			$columns['used'] = '已使用';
 			$columns['coupon_title'] = '优惠';
+			unset($columns['title']);
+			unset($columns['date']);
 			return $columns;
 		});
 
 		add_action('manage_code_posts_custom_column', function ($column_name) {
 			global $post;
 			switch ($column_name) {
+				case 'code':
+					echo $post->post_name;
+					break;
+				case 'openid':
+					echo get_field('openid', $post->ID);
+					break;
+				case 'used':
+					$used = get_field('used', $post->ID);
+					if (!$used) {
+						echo '未使用';
+					} else {
+						echo get_post(get_post_meta($post->ID, 'used_shop', true))->post_title . ' ';
+						echo date('Y-m-d H:i:s', get_field('used_time', $post->ID) + get_option( 'gmt_offset' ) * HOUR_IN_SECONDS);
+					}
+					break;
 				case 'coupon_title' :
-					$coupon = get_field('coupon', $post->ID);
-					echo $coupon->post_title;
+					$coupon = get_post(get_post_meta($post->ID, 'coupon', true));
+					echo '<a href="' . site_url('wp-admin/post.php?post=' . $coupon->ID . '&action=edit') . '" target="_blank">' . $coupon->post_title . '</a>';
 					break;
 				default;
 			}

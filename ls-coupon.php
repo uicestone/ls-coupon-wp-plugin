@@ -24,6 +24,7 @@ register_deactivation_hook( __FILE__, array( 'LS_Coupon', 'plugin_deactivation' 
 
 require_once( LS_Coupon__PLUGIN_DIR . 'class.ls-coupon.php' );
 require_once( LS_Coupon__PLUGIN_DIR . 'class.ls-coupon-rest-api.php' );
+require_once( LS_Coupon__PLUGIN_DIR . 'functions.php' );
 
 add_action( 'rest_api_init', array( 'LS_Coupon_REST_API', 'init' ) );
 

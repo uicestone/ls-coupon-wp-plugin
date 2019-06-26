@@ -31,9 +31,16 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 
 		$parameters = array('post_type' => 'shop', 'posts_per_page' => -1);
 
+		$near = $request->get_param('near');
+		$near_lat_long = array();
+
+		if ($near) {
+			$near_lat_long = explode(',', $near);
+		}
+
 		$posts = get_posts($parameters);
 
-		$shops = array_map(function (WP_Post $shop_post) {
+		$shops = array_map(function (WP_Post $shop_post) use($near_lat_long) {
 
 			$valid_coupons = array_map(function(WP_Post $coupon_post) {
 				return array(
@@ -70,8 +77,21 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 				'validCoupons' => $valid_coupons
 			);
 
+			if ($near_lat_long) {
+				$shop_latitude = get_post_meta($shop_post->ID, 'latitude', true);
+				$shop_longitude = get_post_meta($shop_post->ID, 'longitude', true);
+				$shop['distance'] = round(haversine_great_circle_distance($near_lat_long[0], $near_lat_long[1], $shop_latitude, $shop_longitude) / 1000, 1);
+			}
+
 			return (object) $shop;
+
 		}, $posts);
+
+		if ($near_lat_long) {
+			usort($shops, function($a, $b) {
+				return $a->distance - $b->distance;
+			});
+		}
 
 		return rest_ensure_response($shops);
 	}

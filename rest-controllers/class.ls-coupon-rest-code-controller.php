@@ -38,8 +38,26 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 	 */
 	public static function get_codes( $request ) {
 
-		if (!$openid = $request->get_param('openid')) {
+		$openid = $request->get_param('openid');
+
+		if (!$openid) {
 			return rest_ensure_response(new WP_Error(400, 'Missing openid.'));
+		}
+
+		$users = get_users(array('meta_key' => 'openid', 'meta_value' => $openid));
+
+		$parameters = array('post_type' => 'code', 'posts_per_page' => -1, 'post_status' => 'any');
+
+		if ($users) {
+			$manage_shop_post = get_field('shop', 'user_' . $users[0]->ID);
+			$parameters['meta_query'] = array(
+				array('key' => 'used_shop', 'value' => $manage_shop_post->ID)
+			);
+			$parameters['posts_per_page'] = 50;
+		} else {
+			$parameters['meta_query'] = array(
+				array('key' => 'openid', 'value' => $openid)
+			);
 		}
 
 		$parameters = array('post_type' => 'code', 'posts_per_page' => -1, 'post_status' => 'any', 'meta_query' => array(
@@ -58,6 +76,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 				'id' => $post->ID,
 				'codeString' => $post->post_name,
 				'couponId' => $coupon_id,
+				'customerNickname' => get_post_meta($post->ID, 'customer_nickname', true),
 				// 'expires_at' => '',
 				'coupon' => array(
 					'id' => $coupon_id,
@@ -69,7 +88,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 							'address' => get_field('address', $shop_post->ID),
 							'phone' => get_field('phone', $shop_post->ID),
 						);
-					}, get_field('shops', $coupon_id)),
+					}, get_field('shops', $coupon_id) ?: array()),
 					'allShops' => !!get_field('all_shops', $coupon_id),
 					'thumbnailUrl' => get_the_post_thumbnail_url($coupon_id),
 					'content' => wpautop($coupon_post->post_content),
@@ -185,6 +204,10 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 
 		$code_post = get_page_by_path($body['codeString'], 'OBJECT', 'code');
 
+		if (!$code_post) {
+			return rest_ensure_response(new WP_Error(404, '券码不存在'));
+		}
+
 		$openid = $body['openid'];
 
 		if (!$openid) {
@@ -200,18 +223,16 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 		$shop_post = get_field('shop', 'user_' . $user->ID);
 
 		if (!$shop_post) {
-			return rest_ensure_response(new WP_Error(403, 'User is not assigned to any shop.'));
+			return rest_ensure_response(new WP_Error(403, '您尚未绑定核销门店'));
 		}
 
 		$used = get_field('used', $code_post);
 
-		if ($used) {
-			return rest_ensure_response(new WP_Error(403, 'Code is already used.', $code_string));
+		if (!$used) {
+			update_post_meta($code_post->ID, 'used', 1);
+			update_post_meta($code_post->ID, 'used_shop', $shop_post->ID);
+			update_post_meta($code_post->ID, 'used_time', time());
 		}
-
-		update_post_meta($code_post->ID, 'used', 1);
-		update_post_meta($code_post->ID, 'used_shop', $shop_post->ID);
-		update_post_meta($code_post->ID, 'used_time', time());
 
 		$coupon_id = get_post_meta($code_post->ID, 'coupon', true);
 
@@ -234,6 +255,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 				'allShop' => !!get_field('all_shop', $coupon_id),
 			),
 			'used' => true,
+			'wasUsed' => !!$used,
 			'usedShop' => array(
 				'id' => $shop_post->ID,
 				'name' => get_the_title($shop_post->ID)

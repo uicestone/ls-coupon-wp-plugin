@@ -110,11 +110,12 @@ class LS_Coupon_Admin {
 
 		add_filter('manage_code_posts_columns', function ($columns) {
 			$columns['code'] = '券码';
-			$columns['customer_nickname'] = '微信昵称';
+			$columns['customer'] = '微信昵称';
 			$columns['used'] = '已使用';
 			$columns['coupon_title'] = '优惠';
 			unset($columns['title']);
 			unset($columns['date']);
+			$columns['date'] = '日期';
 			return $columns;
 		});
 
@@ -124,8 +125,8 @@ class LS_Coupon_Admin {
 				case 'code':
 					echo $post->post_name;
 					break;
-				case 'customer_nickname':
-					echo get_field('customer_nickname', $post->ID);
+				case 'customer':
+					echo get_field('customer_nickname', $post->ID) . ' (' . get_field('openid', $post->ID) . ')';
 					break;
 				case 'used':
 					$used = get_field('used', $post->ID);

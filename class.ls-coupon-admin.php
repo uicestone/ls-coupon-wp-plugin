@@ -179,6 +179,22 @@ class LS_Coupon_Admin {
 
 		add_filter( 'acf/load_value/type=date_time_picker', 'acf_load_as_timestamp', 10, 3 );
 
+		add_action( 'add_meta_boxes', function($post_type, $post) {
+			if (!in_array($post_type, array('shop', 'coupon'))) return;
+			add_meta_box(
+				'qr-code',
+				__( '专用小程序二维码' ),
+				function() use ($post_type, $post){
+					?>
+					<img src="<?=generate_weapp_qrcode($post_type, $post->ID)?>" style="width:100%">
+					<?php
+				},
+				null,
+				'side',
+				'default'
+			);
+		}, 10, 2 );
+
 	}
 
 }

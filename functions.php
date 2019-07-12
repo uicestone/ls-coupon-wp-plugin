@@ -65,23 +65,11 @@ function transformlng($lng, $lat) {
 	return $ret;
 };
 
-function generate_weapp_qrcode($shop_id = null, $coupon_id = null) {
+function generate_weapp_qrcode($type, $id) {
 	$wx = new WeixinAPI(true);
 
-	if ($shop_id) {
-		$key = 'qrcode-shop-' . $shop_id;
-		$query = '?shop=' . $shop_id;
-	}
+	$key = "qrcode-{$type}-{$id}";
+	$query = "?{$type}={$id}";
 
-	if ($shop_id) {
-		$key = 'qrcode-coupon-' . $shop_id;
-		$query = '?coupon=' . $coupon_id;
-	}
-
-	if (empty($key)) {
-		error_log('Either shop or coupon id should be defined.');
-		exit;
-	}
-
-	return $wx->app_create_qr_code($key, '/pages/index' . $query);
+	return $wx->app_create_qr_code($key, '/pages/index' . $query, 1280);
 }

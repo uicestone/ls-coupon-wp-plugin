@@ -40,17 +40,7 @@ class LS_Coupon_REST_Coupon_Controller extends WP_REST_Controller {
 		$posts = get_posts($parameters);
 
 		$coupons = array_map(function (WP_Post $post) {
-			$coupon = array(
-				'id' => $post->ID,
-				'desc' => get_field('desc', $post->ID),
-				'shops' => get_field('shops', $post->ID),
-				'allShops' => get_field('all_shops', $post->ID),
-				'thumbnailUrl' => get_the_post_thumbnail_url($post->ID),
-				'content' => wpautop($post->post_content),
-				'validFrom' => get_field('valid_from', $post->ID),
-				'validTill' => get_field('valid_till', $post->ID),
-			);
-			return (object) $coupon;
+			return get_coupon($post->ID);
 		}, $posts);
 
 		return rest_ensure_response($coupons);
@@ -73,10 +63,7 @@ class LS_Coupon_REST_Coupon_Controller extends WP_REST_Controller {
 			add_post_meta($coupon_id, $key, $value);
 		}
 
-		return rest_ensure_response(array(
-			'id' => $coupon_id,
-			'type' => get_post_meta($coupon_id, 'type', true)
-		));
+		return rest_ensure_response(get_coupon($coupon_id));
 	}
 
 	/**

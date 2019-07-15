@@ -73,3 +73,61 @@ function generate_weapp_qrcode($type, $id) {
 
 	return $wx->app_create_qr_code($key, '/pages/index' . $query, 1280);
 }
+
+function get_code($code_id, $coupon_id = null) {
+	if (!$coupon_id) {
+		$coupon_id = get_post_meta($code_id, 'coupon', true);
+	}
+
+	$code_post = get_post($code_id);
+	$coupon_post = get_post($coupon_id);
+
+	$code = array(
+		'id' => $code_id,
+		'codeString' => $code_post->post_name,
+		'couponId' => $coupon_id,
+		// 'expires_at' => '',
+		'coupon' => get_coupon($coupon_id)
+	);
+
+	$used = get_field('used', $code_id);
+
+	if ($used) {
+		$used_shop_post = get_post(get_post_meta($code_id, 'used_shop', true));
+
+		$code = array_merge($code, array(
+			'used' => !!$used,
+			'usedShop' => array(
+				'id' => $used_shop_post->ID,
+				'name' => get_the_title($used_shop_post)
+			),
+			'usedTime' => get_field('used_time', $code_id)
+		));
+	}
+
+	return (object) $code;
+}
+
+function get_coupon($coupon_id) {
+	$coupon_post = get_post($coupon_id);
+
+	$coupon = array(
+		'id' => $coupon_id,
+		'desc' => get_field('desc', $coupon_id),
+		'shops' => array_map(function($shop_post) {
+			return array(
+				'id' => $shop_post->ID,
+				'name' => get_the_title($shop_post->ID),
+				'address' => get_field('address', $shop_post->ID),
+				'phone' => get_field('phone', $shop_post->ID),
+			);
+		}, get_field('shops', $coupon_id) ?: array()),
+		'allShops' => !!get_field('all_shops', $coupon_id),
+		'thumbnailUrl' => get_the_post_thumbnail_url($coupon_id),
+		'content' => wpautop($coupon_post->post_content),
+		'validFrom' => get_field('valid_from', $coupon_id),
+		'validTill' => get_field('valid_till', $coupon_id),
+	);
+
+	return (object) $coupon;
+}

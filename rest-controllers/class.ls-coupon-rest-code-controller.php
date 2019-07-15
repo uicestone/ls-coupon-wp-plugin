@@ -67,48 +67,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 		$posts = get_posts($parameters);
 
 		$codes = array_map(function (WP_Post $post) {
-			$coupon_id = get_post_meta($post->ID, 'coupon', true);
-			$coupon_post = get_post($coupon_id);
-
-			$used_shop_post = get_field('used_shop', $post->ID);
-
-			$code = array(
-				'id' => $post->ID,
-				'codeString' => $post->post_name,
-				'couponId' => $coupon_id,
-				'customerNickname' => get_post_meta($post->ID, 'customer_nickname', true),
-				// 'expires_at' => '',
-				'coupon' => array(
-					'id' => $coupon_id,
-					'desc' => get_field('desc', $coupon_id),
-					'shops' => array_map(function($shop_post) {
-						return array(
-							'id' => $shop_post->ID,
-							'name' => get_the_title($shop_post->ID),
-							'address' => get_field('address', $shop_post->ID),
-							'phone' => get_field('phone', $shop_post->ID),
-						);
-					}, get_field('shops', $coupon_id) ?: array()),
-					'allShops' => !!get_field('all_shops', $coupon_id),
-					'thumbnailUrl' => get_the_post_thumbnail_url($coupon_id),
-					'content' => wpautop($coupon_post->post_content),
-					'validFrom' => get_field('valid_from', $coupon_id),
-					'validTill' => get_field('valid_till', $coupon_id),
-				)
-			);
-
-			if ($used = get_field('used', $post->ID)) {
-				$code = array_merge($code, array(
-					'used' => true,
-					'usedShop' => array(
-						'id' => $used_shop_post->ID,
-						'name' => get_the_title($used_shop_post->ID)
-					),
-					'usedTime' => date('Y-m-d H:i:s', time() + get_option( 'gmt_offset' ) * HOUR_IN_SECONDS)
-				));
-			}
-
-			return (object) $code;
+			return get_code($post->ID);
 		}, $posts);
 
 		return rest_ensure_response($codes);
@@ -138,15 +97,16 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 
 		foreach ($body['couponIds'] as $coupon_id) {
 
-			// TODO
-			// validate coupon
-			$coupon_post = get_post($coupon_id);
+			// TODO validate coupon
 
 			$code_string = crc32(sha1($openid . ',' . $coupon_id));
 
 			$code_post_exists = get_page_by_path($code_string, 'OBJECT', 'code');
 
 			if ($code_post_exists && !constant('WP_DEBUG')) {
+				$code_exists = get_code($code_post_exists->ID);
+				$code_exists->claimed = true;
+				$codes[] = $code_exists;
 				continue;
 			}
 
@@ -160,31 +120,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 			add_post_meta($code_id, 'openid', $openid);
 			add_post_meta($code_id, 'customer_nickname', $customer_nickname);
 
-			$code_post = get_post($code_id);
-
-			$code = array(
-				'id' => $code_id,
-				'codeString' => $code_post->post_name,
-				'couponId' => $coupon_id,
-				// 'expires_at' => '',
-				'coupon' => array(
-					'id' => $coupon_id,
-					'desc' => get_field('desc', $coupon_id),
-					'shops' => array_map(function($shop_post) {
-						return array(
-							'id' => $shop_post->ID,
-							'name' => get_the_title($shop_post->ID),
-							'address' => get_field('address', $shop_post->ID),
-							'phone' => get_field('phone', $shop_post->ID),
-						);
-					}, get_field('shops', $coupon_id)),
-					'allShops' => !!get_field('all_shops', $coupon_id),
-					'thumbnailUrl' => get_the_post_thumbnail_url($coupon_id),
-					'content' => wpautop($coupon_post->post_content),
-					'validFrom' => get_field('valid_from', $coupon_id),
-					'validTill' => get_field('valid_till', $coupon_id),
-				),
-			);
+			$code = get_code($code_id, $coupon_id);
 
 			$codes[] = $code;
 		}
@@ -234,34 +170,11 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 			update_post_meta($code_post->ID, 'used_time', time());
 		}
 
-		$coupon_id = get_post_meta($code_post->ID, 'coupon', true);
+		$code = get_code($code_post->ID);
 
-		return rest_ensure_response(array(
-			'id' => $code_post->ID,
-			'codeString' => $code_post->post_name,
-			'couponId' => $coupon_id,
-			// 'expires_at' => '',
-			'coupon' => array(
-				'id' => $coupon_id,
-				'desc' => get_field('desc', $coupon_id),
-				'shops' => array_map(function($shop_post) {
-					return array(
-						'id' => $shop_post->ID,
-						'name' => get_the_title($shop_post->ID),
-						'address' => get_field('address', $shop_post->ID),
-						'phone' => get_field('phone', $shop_post->ID),
-					);
-				}, get_field('shops', $coupon_id)),
-				'allShop' => !!get_field('all_shop', $coupon_id),
-			),
-			'used' => true,
-			'wasUsed' => !!$used,
-			'usedShop' => array(
-				'id' => $shop_post->ID,
-				'name' => get_the_title($shop_post->ID)
-			),
-			'usedTime' => date('Y-m-d H:i:s', time() + get_option( 'gmt_offset' ) * HOUR_IN_SECONDS)
-		));
+		$code->wasUsed = !!$used;
+
+		return rest_ensure_response($code);
 	}
 
 	/**

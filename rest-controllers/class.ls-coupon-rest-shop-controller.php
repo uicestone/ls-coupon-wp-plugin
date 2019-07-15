@@ -123,6 +123,10 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 
 		$post = get_post($id);
 
+		if (!$post) {
+			return rest_ensure_response(new WP_Error(404, '门店不存在'));
+		}
+
 		$valid_coupons = array_map(function(WP_Post $coupon_post) {
 			return array(
 				'id' => $coupon_post->ID,

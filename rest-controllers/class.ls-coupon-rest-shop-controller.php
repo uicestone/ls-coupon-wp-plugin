@@ -19,6 +19,14 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 			)
 		) );
 
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>.+)', array(
+			array(
+				'methods' => WP_REST_Server::READABLE,
+				'callback' => array( $this, 'get_shop' ),
+			)
+		) );
+
+
 	}
 
 	/**
@@ -94,6 +102,69 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 		}
 
 		return rest_ensure_response($shops);
+	}
+
+	/**
+	 * Get a shop
+	 *
+	 * @param WP_REST_Request $request
+	 * @return WP_Error|WP_REST_Response
+	 */
+	public static function get_shop( $request ) {
+
+		$id = $request->get_param('id');
+
+		$near = $request->get_param('near');
+		$near_lat_long = array();
+
+		if ($near) {
+			$near_lat_long = explode(',', $near);
+		}
+
+		$post = get_post($id);
+
+		$valid_coupons = array_map(function(WP_Post $coupon_post) {
+			return array(
+				'id' => $coupon_post->ID,
+				'desc' => get_field('desc', $coupon_post->ID),
+				'all_shops' => !!get_field('all_shops', $coupon_post->ID),
+				'thumbnailUrl' => get_the_post_thumbnail_url($coupon_post->ID),
+				'content' => wpautop($coupon_post->post_content),
+				'validFrom' => get_field('valid_from', $coupon_post->ID),
+				'validTill' => get_field('valid_till', $coupon_post->ID),
+			);
+		}, get_posts(array(
+			'post_type' => 'coupon',
+			'posts_per_page' => -1,
+			'meta_query' => array(
+				'relation' => 'OR',
+				'shops' => array(
+					'key' => 'shops',
+					'value' => '"' . $post->ID . '"',
+					'compare' => 'LIKE'
+				),
+				'all_shops' => array(
+					'key' => 'all_shops',
+					'value' => '1'
+				),
+			)
+		)));
+
+		$shop = array(
+			'id' => $post->ID,
+			'name' => get_the_title($post->ID),
+			'address' => get_field('address', $post->ID),
+			'phone' => get_field('phone', $post->ID),
+			'validCoupons' => $valid_coupons
+		);
+
+		if ($near_lat_long) {
+			$shop_latitude = get_post_meta($post->ID, 'latitude', true);
+			$shop_longitude = get_post_meta($post->ID, 'longitude', true);
+			$shop['distance'] = round(haversine_great_circle_distance($near_lat_long[0], $near_lat_long[1], $shop_latitude, $shop_longitude) / 1000, 1);
+		}
+
+		return rest_ensure_response($shop);
 	}
 
 }

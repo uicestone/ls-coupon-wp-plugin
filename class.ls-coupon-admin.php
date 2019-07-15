@@ -195,6 +195,8 @@ class LS_Coupon_Admin {
 			);
 		}, 10, 2 );
 
+		add_role('manager', '店员');
+
 	}
 
 }

@@ -26,7 +26,12 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 			)
 		) );
 
-
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/manager', array(
+			array(
+				'methods' => WP_REST_Server::EDITABLE,
+				'callback' => array( $this, 'register_shop_manager' ),
+			)
+		) );
 	}
 
 	/**
@@ -170,5 +175,56 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 
 		return rest_ensure_response($shop);
 	}
+
+	/**
+	 * Register shop manager
+	 *
+	 * @param WP_REST_Request $request
+	 * @return WP_Error|WP_REST_Response
+	 */
+	public static function register_shop_manager( $request ) {
+		$body = $request->get_json_params();
+
+		$openid = $body['openid'];
+		$shop_id = $body['shopId'];
+		$nickname = $body['nickname'];
+
+		if (!$openid || !$shop_id || !$nickname) {
+			return rest_ensure_response(new WP_Error(404, '参数错误'));
+		}
+
+		// check if user exists
+		$user_object = get_users(array('meta_key' => 'openid', 'meta_value' => $openid))[0];
+
+		if (!$user_object) {
+			$user_id = wp_insert_user(array(
+				'user_login' => $openid,
+				'display_name' => $nickname,
+				'first_name' => $nickname,
+				'role' => 'manager'
+			));
+
+			add_user_meta($user_id, 'openid', $openid);
+			add_user_meta($user_id, 'shop', $shop_id);
+			$user_object = get_user_by('ID', $user_id);
+		}
+
+		$user = array(
+			'id' => $user_object->ID,
+			'name' => $user_object->display_name,
+			'roles' => $user_object->roles
+		);
+
+		$manage_shop_post_id = get_user_meta($user_object->ID, 'shop', true);
+
+		if ($manage_shop_post_id) {
+			$manage_shop_post = get_post($manage_shop_post_id);
+			$user['manageShop'] = (object) array(
+				'id' => $manage_shop_post->ID,
+				'name' => $manage_shop_post->post_title
+			);
+		}
+
+		return rest_ensure_response($user);	}
 
 }

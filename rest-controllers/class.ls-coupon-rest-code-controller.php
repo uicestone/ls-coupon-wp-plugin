@@ -39,17 +39,24 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 	public static function get_codes( $request ) {
 
 		$openid = $request->get_param('openid');
+		$shop_id = $request->get_param('shopId');
 
 		if (!$openid) {
 			return rest_ensure_response(new WP_Error('missing_openid', 'Missing openid.', array('status' => 400)));
 		}
 
-		$users = get_users(array('meta_key' => 'openid', 'meta_value' => $openid));
+		$manager = get_users(array('meta_key' => 'openid', 'meta_value' => $openid))[0];
 
 		$parameters = array('post_type' => 'code', 'posts_per_page' => -1, 'post_status' => 'any');
 
-		if ($users) {
-			$manage_shop_post = get_field('shop', 'user_' . $users[0]->ID);
+		if ($manager && $shop_id) {
+			$manage_shop_post = get_field('shop', 'user_' . $manager->ID);
+			if (!$manage_shop_post) {
+				return rest_ensure_response(new WP_Error('manage_shop_missing', '没有绑定门店', array('status' => 403)));
+			}
+			if ($manage_shop_post->ID != $shop_id) {
+				return rest_ensure_response(new WP_Error('manage_shop_mismatch', '绑定门店错误', array('status' => 403)));
+			}
 			$parameters['meta_query'] = array(
 				array('key' => 'used_shop', 'value' => $manage_shop_post->ID)
 			);
@@ -59,10 +66,6 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 				array('key' => 'openid', 'value' => $openid)
 			);
 		}
-
-		$parameters = array('post_type' => 'code', 'posts_per_page' => -1, 'post_status' => 'any', 'meta_query' => array(
-			array('key' => 'openid', 'value' => $openid)
-		));
 
 		$posts = get_posts($parameters);
 
@@ -165,9 +168,11 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 		$used = get_field('used', $code_post);
 
 		if (!$used) {
-			update_post_meta($code_post->ID, 'used', 1);
-			update_post_meta($code_post->ID, 'used_shop', $shop_post->ID);
-			update_post_meta($code_post->ID, 'used_time', time());
+			update_field('used', 1, $code_post->ID);
+			update_field('used_shop', $shop_post->ID, $code_post->ID);
+			update_field('scanned_manager', $user->ID, $code_post->ID);
+			update_field('used_time', time(), $code_post->ID);
+
 		}
 
 		$code = get_code($code_post->ID);

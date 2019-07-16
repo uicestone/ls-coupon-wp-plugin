@@ -87,21 +87,23 @@ function get_code($code_id, $coupon_id = null) {
 		'codeString' => $code_post->post_name,
 		'couponId' => $coupon_id,
 		// 'expires_at' => '',
-		'coupon' => get_coupon($coupon_id)
+		'coupon' => get_coupon($coupon_id),
+		'customerNickname' => get_post_meta($code_id, 'customer_nickname', true)
 	);
 
 	$used = get_field('used', $code_id);
 
 	if ($used) {
 		$used_shop_post = get_post(get_post_meta($code_id, 'used_shop', true));
-
+		$scanned_manager_user = get_field('scanned_manager', $code_id);
 		$code = array_merge($code, array(
 			'used' => !!$used,
 			'usedShop' => array(
 				'id' => $used_shop_post->ID,
 				'name' => get_the_title($used_shop_post)
 			),
-			'usedTime' => get_field('used_time', $code_id)
+			'usedTime' => get_field('used_time', $code_id),
+			'managerName' => $scanned_manager_user->display_name
 		));
 	}
 

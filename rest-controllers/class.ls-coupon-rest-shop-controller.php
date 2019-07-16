@@ -199,14 +199,19 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 
 		if (!$user_object) {
 			$user_id = wp_insert_user(array(
-				'user_login' => $openid,
-				'display_name' => $nickname,
-				'first_name' => $nickname,
+				'user_login' => 'manager-' . substr($openid, -4),
+				'user_pass' => $openid,
+				'display_name' => $display_name,
+				'nickname' => $nickname,
 				'role' => 'manager'
 			));
 
+			if (is_wp_error($user_id)) {
+				return rest_ensure_response($user_id);
+			}
+
 			add_user_meta($user_id, 'openid', $openid);
-			add_user_meta($user_id, 'shop', $shop_id);
+			update_field('shop', $shop_id, 'user_' . $user_id);
 			$user_object = get_user_by('ID', $user_id);
 		}
 

@@ -129,7 +129,7 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 		$post = get_post($id);
 
 		if (!$post) {
-			return rest_ensure_response(new WP_Error(404, '门店不存在'));
+			return rest_ensure_response(new WP_Error('shop_not_found', '门店不存在', array('status' => 404)));
 		}
 
 		$valid_coupons = array_map(function(WP_Post $coupon_post) {
@@ -188,9 +188,10 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 		$openid = $body['openid'];
 		$shop_id = $body['shopId'];
 		$nickname = $body['nickname'];
+		$display_name = $body['displayName'];
 
 		if (!$openid || !$shop_id || !$nickname) {
-			return rest_ensure_response(new WP_Error(404, '参数错误'));
+			return rest_ensure_response(new WP_Error('wrong_argument', '参数错误', array('status' => 404)));
 		}
 
 		// check if user exists

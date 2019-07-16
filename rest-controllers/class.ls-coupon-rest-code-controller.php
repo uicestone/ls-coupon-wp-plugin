@@ -41,7 +41,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 		$openid = $request->get_param('openid');
 
 		if (!$openid) {
-			return rest_ensure_response(new WP_Error(400, 'Missing openid.'));
+			return rest_ensure_response(new WP_Error('missing_openid', 'Missing openid.', array('status' => 400)));
 		}
 
 		$users = get_users(array('meta_key' => 'openid', 'meta_value' => $openid));
@@ -83,14 +83,14 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 
 		// validate user
 		if (!array_key_exists('openid', $body)) {
-			return rest_ensure_response(new WP_Error(400, 'Missing openid.'));
+			return rest_ensure_response(new WP_Error('openid_missing', 'Missing openid.', array('status' => 400)));
 		}
 
 		$openid = $body['openid'];
 		$customer_nickname = $body['customerNickname'];
 
 		if (!array_key_exists('couponIds', $body) || !is_array($body['couponIds'])) {
-			return rest_ensure_response(new WP_Error(400, 'Missing coupon.'));
+			return rest_ensure_response(new WP_Error('coupon_missing', 'Missing coupon.', array('status' => 400)));
 		}
 
 		$codes = array();
@@ -141,25 +141,25 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 		$code_post = get_page_by_path($body['codeString'], 'OBJECT', 'code');
 
 		if (!$code_post) {
-			return rest_ensure_response(new WP_Error(404, '券码不存在'));
+			return rest_ensure_response(new WP_Error('code_not_found', '券码不存在', array('status' => 404)));
 		}
 
 		$openid = $body['openid'];
 
 		if (!$openid) {
-			return rest_ensure_response(new WP_Error(401, 'Missing openid.'));
+			return rest_ensure_response(new WP_Error('openid_missing', 'Missing openid.', array('status' => 401)));
 		}
 
 		$user = get_users(array('meta_key' => 'openid', 'meta_value' => $openid))[0];
 
 		if (!$user) {
-			return rest_ensure_response(new WP_Error(403, 'User is not allowed to scan.'));
+			return rest_ensure_response(new WP_Error('scan_not_allowed', 'User is not allowed to scan.', array('status' => 403)));
 		}
 
 		$shop_post = get_field('shop', 'user_' . $user->ID);
 
 		if (!$shop_post) {
-			return rest_ensure_response(new WP_Error(403, '您尚未绑定核销门店'));
+			return rest_ensure_response(new WP_Error('manage_shop_missing', '您尚未绑定核销门店', array('status' => 403)));
 		}
 
 		$used = get_field('used', $code_post);

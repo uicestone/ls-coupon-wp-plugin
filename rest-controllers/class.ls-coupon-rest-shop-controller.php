@@ -202,6 +202,7 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 				'user_login' => 'manager-' . substr($openid, -4),
 				'user_pass' => $openid,
 				'display_name' => $display_name,
+				'first_name' => $display_name,
 				'nickname' => $nickname,
 				'role' => 'manager'
 			));

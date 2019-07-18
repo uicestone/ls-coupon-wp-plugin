@@ -170,9 +170,8 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 		if (!$used) {
 			update_field('used', 1, $code_post->ID);
 			update_field('used_shop', $shop_post->ID, $code_post->ID);
-			update_field('scanned_manager', $user->ID, $code_post->ID);
 			update_field('used_time', time(), $code_post->ID);
-
+			update_field('scanned_manager', $user, $code_post->ID);
 		}
 
 		$code = get_code($code_post->ID);

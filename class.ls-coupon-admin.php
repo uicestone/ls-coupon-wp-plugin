@@ -110,12 +110,12 @@ class LS_Coupon_Admin {
 
 		add_filter('manage_code_posts_columns', function ($columns) {
 			$columns['code'] = '券码';
-			$columns['customer'] = '微信昵称';
-			$columns['used'] = '已使用';
+			$columns['customer'] = '客人微信昵称';
+			$columns['used'] = '使用状态';
 			$columns['coupon_title'] = '优惠';
 			unset($columns['title']);
 			unset($columns['date']);
-			$columns['date'] = '日期';
+			$columns['claim_date'] = '领取日期';
 			return $columns;
 		});
 
@@ -126,24 +126,53 @@ class LS_Coupon_Admin {
 					echo $post->post_name;
 					break;
 				case 'customer':
-					echo get_field('customer_nickname', $post->ID) . ' (' . get_field('openid', $post->ID) . ')';
+					echo get_field('customer_nickname', $post->ID);
+						// . ' (' . get_field('openid', $post->ID) . ')'
 					break;
 				case 'used':
 					$used = get_field('used', $post->ID);
 					if (!$used) {
 						echo '未使用';
 					} else {
-						echo get_post(get_post_meta($post->ID, 'used_shop', true))->post_title . ' ';
-						echo date('Y-m-d H:i:s', get_field('used_time', $post->ID) + get_option( 'gmt_offset' ) * HOUR_IN_SECONDS);
+						echo get_field('used_time', $post->ID) . ' 使用';
+						echo '<br>' . get_post(get_post_meta($post->ID, 'used_shop', true))->post_title . ' ';
+						echo ' ' . get_field('scanned_manager', $post->ID)->display_name . ' 核销';
 					}
 					break;
 				case 'coupon_title' :
 					$coupon = get_post(get_post_meta($post->ID, 'coupon', true));
 					echo '<a href="' . site_url('wp-admin/post.php?post=' . $coupon->ID . '&action=edit') . '" target="_blank">' . $coupon->post_title . '</a>';
 					break;
+				case 'claim_date':
+					echo get_the_date('', $post->ID);
+					break;
 				default;
 			}
 		});
+
+		add_filter('manage_edit-code_sortable_columns', function ($sortable_columns) {
+			$sortable_columns['used'] = 'used';
+			$sortable_columns['claim_date'] = 'date';
+			return $sortable_columns;
+		});
+
+		add_action( 'admin_menu', function () {
+			global $menu, $submenu;
+			if (isset($submenu['edit.php?post_type=code'])) {
+				$submenu['edit.php?post_type=code'][5][2] = 'edit.php?post_type=code&orderby=used&order=desc';
+			}
+		}, 100 );
+
+		add_action( 'pre_get_posts', function ( $query ) {
+			if ( $query->is_main_query() && $query->get('post_type') === 'code' ) {
+				$orderby = $query->get('orderby');
+
+				if ($orderby === 'used') {
+					$query->set( 'meta_key', 'used_time' );
+					$query->set( 'orderby', 'meta_value' );
+				}
+			}
+		}, 1);
 
 		/**
 		 * Convert values of ACF core date time pickers from Y-m-d H:i:s to timestamp
@@ -216,6 +245,60 @@ class LS_Coupon_Admin {
 
 			return $username;
 		}, 10, 3);
+
+		add_action('restrict_manage_posts', function() {
+
+			global $current_screen;
+
+			if ($current_screen->post_type == 'code') {
+				?>
+				<select name="used">
+					<option value=""<?php if (empty($_GET['used'])){ ?> selected<?php } ?>>已使用</option>
+					<option value="false"<?php if ($_GET['used']==='false'){ ?> selected<?php } ?>>未使用</option>
+				</select>
+				<?php
+			}
+		});
+
+		add_action('restrict_manage_posts', function() {
+
+			global $current_screen;
+
+			if ($current_screen->post_type == 'code') {
+				?>
+				<select name="used_shop">
+					<option value=""<?php if(empty($_GET['used_shop'])){ ?> selected<?php } ?>>所有门店</option>
+					<?php foreach (get_posts('post_type=shop&posts_per_page=-1') as $shop_post): ?>
+					<option value="<?=$shop_post->ID?>"<?php if($_GET['used_shop']==$shop_post->ID){ ?> selected<?php } ?>><?=get_the_title($shop_post->ID)?></option>
+					<?php endforeach; ?>
+				</select>
+				<?php
+			}
+		});
+
+		add_filter('parse_query', function ($query) {
+			if (is_admin() && $query->query['post_type'] === 'code') {
+				$qv = &$query->query_vars;
+				$qv['meta_query'] = array();
+				if (empty($_GET['used'])) {
+					$qv['meta_query'][] = array(
+						'field' => 'used',
+						'value' => '1'
+					);
+				} else if ($_GET['used'] === 'false') {
+					$qv['meta_query'][] = array(
+						'field' => 'used',
+						'compare' => 'NOT EXISTS'
+					);
+				}
+				if (!empty($_GET['used_shop'])) {
+					$qv['meta_query'][] = array(
+						'field' => 'used_shop',
+						'value' => $_GET['used_shop']
+					);
+				}
+			}
+		});
 
 	}
 

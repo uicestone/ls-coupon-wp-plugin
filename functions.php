@@ -71,7 +71,7 @@ function generate_weapp_qrcode($type, $id) {
 	$key = "qrcode-{$type}-{$id}";
 	$query = "?{$type}={$id}";
 
-	return $wx->app_create_qr_code($key, '/pages/index' . $query, 1280);
+	return $wx->app_create_qr_code($key, '/pages/index/index' . $query, 1280);
 }
 
 function get_code($code_id, $coupon_id = null) {

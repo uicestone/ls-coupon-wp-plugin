@@ -156,6 +156,24 @@ class LS_Coupon_Admin {
 			return $sortable_columns;
 		});
 
+
+		add_filter( 'manage_users_columns', function ( $column ) {
+			$column['shop'] = '门店';
+			unset($column['email']);
+			unset($column['posts']);
+			return $column;
+		} );
+
+
+		add_filter( 'manage_users_custom_column', function ( $val, $column_name, $user_id ) {
+			switch($column_name) {
+				case 'shop' :
+					$shop_id = get_user_meta($user_id, 'shop', true);
+					return get_the_title($shop_id);
+				default:
+			}
+		}, 10, 3 );
+
 		add_action( 'admin_menu', function () {
 			global $menu, $submenu;
 			if (isset($submenu['edit.php?post_type=code'])) {

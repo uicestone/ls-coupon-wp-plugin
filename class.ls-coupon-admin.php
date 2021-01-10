@@ -181,13 +181,37 @@ class LS_Coupon_Admin {
 			}
 		}, 100 );
 
-		add_action( 'pre_get_posts', function ( $query ) {
+		add_action( 'pre_get_posts', function ( WP_Query $query ) {
 			if ( $query->is_main_query() && $query->get('post_type') === 'code' ) {
 				$orderby = $query->get('orderby');
 
 				if ($orderby === 'used') {
 					$query->set( 'meta_key', 'used_time' );
 					$query->set( 'orderby', 'meta_value' );
+				}
+			}
+
+			if ( $query->get('post_type') === 'shop' ) {
+				$user = wp_get_current_user();
+				if (in_array('rc_admin', $user->roles)) {
+					$query->set('meta_key', 'chain_mode');
+					$query->set('meta_value', 'rc');
+				}
+				if (in_array('fc_admin', $user->roles)) {
+					$query->set('meta_key', 'chain_mode');
+					$query->set('meta_value', 'fc');
+				}
+			}
+
+			if ( $query->get('post_type') === 'coupon' ) {
+				$user = wp_get_current_user();
+				if (in_array('rc_admin', $user->roles)) {
+					$query->set('meta_key', 'chain_mode');
+					$query->set('meta_value', 'rc');
+				}
+				if (in_array('fc_admin', $user->roles)) {
+					$query->set('meta_key', 'chain_mode');
+					$query->set('meta_value', 'fc');
 				}
 			}
 		}, 1);
@@ -242,7 +266,11 @@ class LS_Coupon_Admin {
 			);
 		}, 10, 2 );
 
+		$editor = get_role('editor');
+
 		add_role('manager', '店员');
+		add_role('rc_admin', '直营店管理员', $editor->capabilities);
+		add_role('fc_admin', '加盟店管理员', $editor->capabilities);
 
 		add_filter ('sanitize_user', function ($username, $raw_username, $strict) {
 			$username = wp_strip_all_tags( $raw_username );

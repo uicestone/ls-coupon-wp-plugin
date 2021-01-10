@@ -42,7 +42,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 		$shop_id = $request->get_param('shopId');
 
 		if (!$openid) {
-			return rest_ensure_response(new WP_Error('missing_openid', 'Missing openid.', array('status' => 400)));
+			return rest_ensure_response(new WP_Error('missing_openid', '尚未微信登录', array('status' => 400)));
 		}
 
 		$manager = get_users(array('meta_key' => 'openid', 'meta_value' => $openid))[0];
@@ -86,10 +86,14 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 
 		// validate user
 		if (!array_key_exists('openid', $body)) {
-			return rest_ensure_response(new WP_Error('openid_missing', 'Missing openid.', array('status' => 400)));
+			return rest_ensure_response(new WP_Error('openid_missing', '尚未微信登录', array('status' => 400)));
 		}
 
 		$openid = $body['openid'];
+		if (!$openid) {
+			return rest_ensure_response(new WP_Error('openid_missing', '请点击“我的”，微信登录后方可领取.', array('status' => 400)));
+		}
+
 		$customer_nickname = $body['customerNickname'];
 
 		if (!array_key_exists('couponIds', $body) || !is_array($body['couponIds'])) {
@@ -150,7 +154,7 @@ class LS_Coupon_REST_Code_Controller extends WP_REST_Controller {
 		$openid = $body['openid'];
 
 		if (!$openid) {
-			return rest_ensure_response(new WP_Error('openid_missing', 'Missing openid.', array('status' => 401)));
+			return rest_ensure_response(new WP_Error('openid_missing', '尚未微信登录', array('status' => 401)));
 		}
 
 		$user = get_users(array('meta_key' => 'openid', 'meta_value' => $openid))[0];

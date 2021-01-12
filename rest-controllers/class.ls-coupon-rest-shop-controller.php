@@ -55,7 +55,7 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 
 		$shops = array_map(function (WP_Post $shop_post) use($near_lat_long) {
 
-			$coupon_posts = array_filter(get_posts(array(
+			$coupon_posts = array_values(array_filter(get_posts(array(
 				'post_type' => 'coupon',
 				'posts_per_page' => -1,
 				'meta_query' => array(
@@ -72,7 +72,7 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 				)
 			)), function ($coupon) {
 				return !get_field('qr_only', $coupon->ID);
-			});
+			}));
 
 			$valid_coupons = array_map(function(WP_Post $coupon_post) {
 				return array(
@@ -136,7 +136,7 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 			return rest_ensure_response(new WP_Error('shop_not_found', '门店不存在', array('status' => 404)));
 		}
 
-		$coupon_posts = array_filter(get_posts(array(
+		$coupon_posts = array_values(array_filter(get_posts(array(
 			'post_type' => 'coupon',
 			'posts_per_page' => -1,
 			'meta_query' => array(
@@ -153,7 +153,7 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 			)
 		)), function ($coupon) {
 			return !get_field('qr_only', $coupon->ID);
-		});
+		}));
 
 		$valid_coupons = array_map(function(WP_Post $coupon_post) {
 			return array(

@@ -55,17 +55,7 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 
 		$shops = array_map(function (WP_Post $shop_post) use($near_lat_long) {
 
-			$valid_coupons = array_map(function(WP_Post $coupon_post) {
-				return array(
-					'id' => $coupon_post->ID,
-					'desc' => get_field('desc', $coupon_post->ID),
-					'all_shops' => !!get_field('all_shops', $coupon_post->ID),
-					'thumbnailUrl' => get_the_post_thumbnail_url($coupon_post->ID),
-					'content' => wpautop($coupon_post->post_content),
-					'validFrom' => get_field('valid_from', $coupon_post->ID),
-					'validTill' => get_field('valid_till', $coupon_post->ID),
-				);
-			}, get_posts(array(
+			$coupon_posts = array_filter(get_posts(array(
 				'post_type' => 'coupon',
 				'posts_per_page' => -1,
 				'meta_query' => array(
@@ -80,7 +70,21 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 						'value' => '1'
 					),
 				)
-			)));
+			)), function ($coupon) {
+				return !get_field('qr_only', $coupon->ID);
+			});
+
+			$valid_coupons = array_map(function(WP_Post $coupon_post) {
+				return array(
+					'id' => $coupon_post->ID,
+					'desc' => get_field('desc', $coupon_post->ID),
+					'all_shops' => !!get_field('all_shops', $coupon_post->ID),
+					'thumbnailUrl' => get_the_post_thumbnail_url($coupon_post->ID),
+					'content' => wpautop($coupon_post->post_content),
+					'validFrom' => get_field('valid_from', $coupon_post->ID),
+					'validTill' => get_field('valid_till', $coupon_post->ID),
+				);
+			}, $coupon_posts);
 
 			$shop = array(
 				'id' => $shop_post->ID,
@@ -132,17 +136,7 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 			return rest_ensure_response(new WP_Error('shop_not_found', '门店不存在', array('status' => 404)));
 		}
 
-		$valid_coupons = array_map(function(WP_Post $coupon_post) {
-			return array(
-				'id' => $coupon_post->ID,
-				'desc' => get_field('desc', $coupon_post->ID),
-				'all_shops' => !!get_field('all_shops', $coupon_post->ID),
-				'thumbnailUrl' => get_the_post_thumbnail_url($coupon_post->ID),
-				'content' => wpautop($coupon_post->post_content),
-				'validFrom' => get_field('valid_from', $coupon_post->ID),
-				'validTill' => get_field('valid_till', $coupon_post->ID),
-			);
-		}, get_posts(array(
+		$coupon_posts = array_filter(get_posts(array(
 			'post_type' => 'coupon',
 			'posts_per_page' => -1,
 			'meta_query' => array(
@@ -157,7 +151,21 @@ class LS_Coupon_REST_Shop_Controller extends WP_REST_Controller {
 					'value' => '1'
 				),
 			)
-		)));
+		)), function ($coupon) {
+			return !get_field('qr_only', $coupon->ID);
+		});
+
+		$valid_coupons = array_map(function(WP_Post $coupon_post) {
+			return array(
+				'id' => $coupon_post->ID,
+				'desc' => get_field('desc', $coupon_post->ID),
+				'all_shops' => !!get_field('all_shops', $coupon_post->ID),
+				'thumbnailUrl' => get_the_post_thumbnail_url($coupon_post->ID),
+				'content' => wpautop($coupon_post->post_content),
+				'validFrom' => get_field('valid_from', $coupon_post->ID),
+				'validTill' => get_field('valid_till', $coupon_post->ID),
+			);
+		}, $coupon_posts);
 
 		$shop = array(
 			'id' => $post->ID,

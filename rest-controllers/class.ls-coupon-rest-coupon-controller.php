@@ -43,6 +43,10 @@ class LS_Coupon_REST_Coupon_Controller extends WP_REST_Controller {
 			return get_coupon($post->ID);
 		}, $posts);
 
+		$coupons = array_filter($coupons, function ($coupon) {
+			return !get_field('qr_only', $coupon->ID);
+		});
+
 		return rest_ensure_response($coupons);
 	}
 
